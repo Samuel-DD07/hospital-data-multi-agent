@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Hospitalier</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+            padding: 24px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 24px;
+            color: #1a1a2e;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            padding: 10px 20px;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .search-bar button:hover {
+            background: #2d2d6e;
+        }
+
+        #status {
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            color: #555;
+            min-height: 20px;
+        }
+
+        #summary-box {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1a1a2e;
+            display: none;
+        }
+
+        #summary-box h2 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+
+        .metrics {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .metric {
+            background: #f0f0f8;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+
+        .metric strong {
+            display: block;
+            font-size: 1.2rem;
+            color: #1a1a2e;
+        }
+
+        .insights-list {
+            margin-top: 10px;
+            padding-left: 16px;
+            font-size: 0.9rem;
+        }
+
+        .alertes-section {
+            margin-top: 12px;
+        }
+
+        .alerte {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        .alerte.critique {
+            background: #fdecea;
+            border-left: 3px solid #c0392b;
+        }
+
+        .alerte.warning {
+            background: #fff8e1;
+            border-left: 3px solid #f39c12;
+        }
+
+        .alerte.info {
+            background: #e8f4fd;
+            border-left: 3px solid #2980b9;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .chart-card h3 {
+            font-size: 0.95rem;
+            margin-bottom: 14px;
+            color: #1a1a2e;
+        }
+
+        canvas {
+            max-height: 260px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Dashboard Hospitalier</h1>
+
+    <div class="search-bar">
+        <input type="text" id="query-input" placeholder="Ex : Analyse les patients par service..." />
+        <button onclick="sendQuery()">Analyser</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="summary-box">
+        <h2 id="summary-text"></h2>
+        <div class="metrics" id="metrics-row"></div>
+        <ul class="insights-list" id="insights-list"></ul>
+        <div class="alertes-section" id="alertes-section"></div>
+        <p id="conclusion-text" style="margin-top:10px; font-style:italic; font-size:0.9rem;"></p>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3>Patients par service</h3>
+            <canvas id="chartService"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Diagnostics les plus frequents</h3>
+            <canvas id="chartDiag"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const N8N_URL = "http://localhost:5678/webhook-test/bde029bb-a3f1-4745-a222-69062771e024";
+        let chartService = null;
+        let chartDiag = null;
+
+        async function sendQuery() {
+            const query = document.getElementById("query-input").value.trim();
+            if (!query) return;
+
+            document.getElementById("status").textContent = "Analyse en cours...";
+            document.getElementById("summary-box").style.display = "none";
+
+            try {
+                const res = await fetch(N8N_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query })
+                });
+
+                const raw = await res.text();
+                const data = JSON.parse(raw);
+
+                document.getElementById("status").textContent = "Analyse terminee.";
+                renderDashboard(data);
+
+            } catch (err) {
+                document.getElementById("status").textContent = "Erreur : " + err.message;
+                console.error(err);
+            }
+        }
+
+        function renderDashboard(data) {
+            // Resume
+            document.getElementById("summary-text").textContent = data.summary || "";
+            document.getElementById("conclusion-text").textContent = data.conclusion || "";
+
+            // Metriques
+            const m = data.metrics || {};
+            const row = document.getElementById("metrics-row");
+            row.innerHTML = `
+                <div class="metric"><strong>${m.total_patients ?? "-"}</strong> Patients</div>
+                <div class="metric"><strong>${m.age_moyen ?? "-"}</strong> Age moyen</div>
+                <div class="metric"><strong>${m.service_plus_charge ?? "-"}</strong> Service le plus charge</div>
+                <div class="metric"><strong>${m.cout_total ?? "-"} €</strong> Cout total</div>
+            `;
+
+            // Insights
+            const insightsList = document.getElementById("insights-list");
+            insightsList.innerHTML = "";
+            (data.insights || []).forEach(i => {
+                const li = document.createElement("li");
+                li.textContent = i;
+                insightsList.appendChild(li);
+            });
+
+            // Alertes
+            const alertesSection = document.getElementById("alertes-section");
+            alertesSection.innerHTML = "";
+            (data.alertes || []).forEach(a => {
+                const div = document.createElement("div");
+                div.className = `alerte ${a.niveau}`;
+                div.textContent = `[${a.niveau.toUpperCase()}] ${a.service} — ${a.message}`;
+                alertesSection.appendChild(div);
+            });
+
+            document.getElementById("summary-box").style.display = "block";
+
+            // Graphique 1 — Patients par service (bar)
+            const labelsService = (data.charts?.patients_par_service || []).map(d => d.service);
+            const valuesService = (data.charts?.patients_par_service || []).map(d => d.value);
+
+            if (chartService) chartService.destroy();
+            chartService = new Chart(document.getElementById("chartService"), {
+                type: "bar",
+                data: {
+                    labels: labelsService,
+                    datasets: [{
+                        label: "Patients",
+                        data: valuesService,
+                        backgroundColor: "rgba(26,26,46,0.7)",
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Graphique 2 — Diagnostics frequents (doughnut)
+            const labelsDiag = (data.charts?.diagnostics_frequents || []).map(d => d.diagnostic);
+            const valuesDiag = (data.charts?.diagnostics_frequents || []).map(d => d.total);
+
+            if (chartDiag) chartDiag.destroy();
+            chartDiag = new Chart(document.getElementById("chartDiag"), {
+                type: "doughnut",
+                data: {
+                    labels: labelsDiag,
+                    datasets: [{
+                        data: valuesDiag,
+                        backgroundColor: ["#1a1a2e", "#16213e", "#0f3460", "#533483", "#e94560", "#2d6a4f", "#40916c", "#74c69d", "#b7e4c7", "#d8f3dc"]
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // Envoi au clavier (touche Entree)
+        document.getElementById("query-input").addEventListener("keydown", e => {
+            if (e.key === "Enter") sendQuery();
+        });
+    </script>
+</body>
+
+</html>
