@@ -1,1 +1,496 @@
-[{"updatedAt":"2026-04-17T09:51:28.509Z","createdAt":"2026-04-17T07:42:56.577Z","id":"huEq7DKtWVn8B9Tq","name":"01_Intro","description":null,"active":false,"isArchived":false,"nodes":[{"parameters":{},"type":"n8n-nodes-base.manualTrigger","typeVersion":1,"position":[-112,-32],"id":"42b3b925-49aa-4133-89c8-81658af42390","name":"When clicking ‘Execute workflow’"},{"parameters":{"options":{}},"type":"n8n-nodes-base.readWriteFile","typeVersion":1.1,"position":[-160,-288],"id":"fa72e86b-269c-4ea1-8fea-31e19784cd88","name":"Read/Write Files from Disk"}],"connections":{"When clicking ‘Execute workflow’":{"main":[[]]}},"settings":{"executionOrder":"v1","binaryMode":"separate","availableInMCP":false},"staticData":null,"meta":null,"pinData":{},"versionId":"d8d0f37e-405f-4ad4-b41c-46e40fb1dca3","activeVersionId":null,"versionCounter":15,"triggerCount":0,"tags":[],"shared":[{"updatedAt":"2026-04-17T07:42:56.581Z","createdAt":"2026-04-17T07:42:56.581Z","role":"workflow:owner","workflowId":"huEq7DKtWVn8B9Tq","projectId":"Okz55glBTmWE9LNr","project":{"updatedAt":"2026-04-17T07:39:45.529Z","createdAt":"2026-04-17T07:39:10.107Z","id":"Okz55glBTmWE9LNr","name":"samuel dorismond <samuel.dorismond@epita.fr>","type":"personal","icon":null,"description":null,"creatorId":"cfd624f8-4c33-4c50-86a4-b2b106193604"}}]},{"updatedAt":"2026-04-22T09:04:36.463Z","createdAt":"2026-04-22T07:41:41.285Z","id":"RBaKnQUiAdSuRfZt","name":"Samuel DORISMOND","description":null,"active":false,"isArchived":false,"nodes":[{"parameters":{"httpMethod":"POST","path":"bde029bb-a3f1-4745-a222-69062771e024","responseMode":"responseNode","options":{}},"type":"n8n-nodes-base.webhook","typeVersion":2.1,"position":[0,16],"id":"5cec7e7d-9ced-48a5-b6bb-e0cf1949cf8f","name":"Webhook","webhookId":"bde029bb-a3f1-4745-a222-69062771e024"},{"parameters":{"model":{"__rl":true,"value":"gpt-4o-mini","mode":"list","cachedResultName":"gpt-4o-mini"},"builtInTools":{},"options":{}},"type":"@n8n/n8n-nodes-langchain.lmChatOpenAi","typeVersion":1.3,"position":[232,240],"id":"705301a0-1354-4145-af1a-864ec5e14646","name":"OpenAI Chat Model","credentials":{"openAiApi":{"id":"6ErSqHHjuNTwT6ik","name":"OpenAi account"}}},{"parameters":{"endpointUrl":"http://localhost:8000/mcp","options":{}},"type":"@n8n/n8n-nodes-langchain.mcpClientTool","typeVersion":1.2,"position":[360,240],"id":"9e12f209-bb18-48ca-850f-036fe8badde6","name":"MCP Client"},{"parameters":{"promptType":"define","text":"=Question: {{ $json.body.query }}\n\nRègles :\n1. Appelle get_schema() en premier pour comprendre les tables.\n2. Génère une requête SQL précise avec les jointures nécessaires.\n3. Appelle run_sql() et retourne UNIQUEMENT les données brutes (JSON).\n","options":{}},"type":"@n8n/n8n-nodes-langchain.agent","typeVersion":3.1,"position":[224,16],"id":"f6b68f6a-01c0-4756-8905-4d5b840fbfee","name":"SQL Agent"},{"parameters":{"model":{"__rl":true,"value":"gpt-4o-mini","mode":"list","cachedResultName":"gpt-4o-mini"},"builtInTools":{},"options":{}},"type":"@n8n/n8n-nodes-langchain.lmChatOpenAi","typeVersion":1.3,"position":[648,240],"id":"66c63843-2fdf-44f2-878e-4f49ce2ac018","name":"OpenAI Chat Model1","credentials":{"openAiApi":{"id":"6ErSqHHjuNTwT6ik","name":"OpenAi account"}}},{"parameters":{"promptType":"define","text":"=Voici la question de l'utilisateur : {{ $('Webhook').item.json.body.query }}\n\nEt voici les données brutes extraites de la base de données :\n{{ $json.output }}\n\nTA MISSION : Transforme ces données en un rapport d'analyse structuré.\nTU DOIS RÉPONDRE UNIQUEMENT EN JSON avec cette structure précise :\n{\n  \"summary\": \"Résumé de l'analyse\",\n  \"metrics\": {\n    \"total_patients\": 0,\n    \"age_moyen\": 0,\n    \"service_plus_charge\": \"Nom\",\n    \"cout_total\": 0\n  },\n  \"insights\": [\"Point clé 1\", \"Point clé 2\"],\n  \"anomalies\": [\"Alerte potentielle 1\"],\n  \"charts\": {\n    \"patients_par_service\": [{\"service\": \"...\", \"value\": 0}],\n    \"diagnostics_frequents\": [{\"diagnostic\": \"...\", \"total\": 0}]\n  },\n  \"conclusion\": \"Bref avis médical\"\n}\n","options":{}},"type":"@n8n/n8n-nodes-langchain.agent","typeVersion":3.1,"position":[576,16],"id":"d93d905b-41d1-4476-b0fa-72d7d5ebb20d","name":"AI Agent Analyste"},{"parameters":{"promptType":"define","text":"=Analyse JSON : {{ $json.output }}\n\nTa mission :\n1. Identifie les situations à risque.\n2. Appelle creer_alerte() pour chaque situation critique.\n3. Appelle calculer_score_risque() si des patients hospitalisés sont mentionnés.\n4. Appelle envoyer_rapport() si tu génères une alerte critique.\n","options":{}},"type":"@n8n/n8n-nodes-langchain.agent","typeVersion":3.1,"position":[928,16],"id":"ffac5bd3-9033-4375-a30a-6740b60f75a6","name":"AI Agent Alerte"},{"parameters":{"model":{"__rl":true,"value":"gpt-4o-mini","mode":"list","cachedResultName":"gpt-4o-mini"},"builtInTools":{},"options":{}},"type":"@n8n/n8n-nodes-langchain.lmChatOpenAi","typeVersion":1.3,"position":[936,240],"id":"742a6647-6f18-45e6-ac0a-8eb4bdd0fb1c","name":"OpenAI Chat Model2","credentials":{"openAiApi":{"id":"6ErSqHHjuNTwT6ik","name":"OpenAi account"}}},{"parameters":{"endpointUrl":"http://localhost:8001/mcp","options":{}},"type":"@n8n/n8n-nodes-langchain.mcpClientTool","typeVersion":1.2,"position":[1064,240],"id":"6d8170e4-87e8-4703-aa2e-95c920883fef","name":"MCP Client 2"},{"parameters":{"model":{"__rl":true,"value":"gpt-4o-mini","mode":"list","cachedResultName":"gpt-4o-mini"},"builtInTools":{},"options":{}},"type":"@n8n/n8n-nodes-langchain.lmChatOpenAi","typeVersion":1.3,"position":[1352,240],"id":"a47004c7-fa04-47fd-bc29-cc7778666412","name":"OpenAI Chat Model3","credentials":{"openAiApi":{"id":"6ErSqHHjuNTwT6ik","name":"OpenAi account"}}},{"parameters":{"respondWith":"json","responseBody":"={{ JSON.parse($json.output) }}","options":{}},"type":"n8n-nodes-base.respondToWebhook","typeVersion":1.5,"position":[1632,-80],"id":"4aecdae6-c98d-4829-8e5b-1b39d155557d","name":"Respond to Webhook1"},{"parameters":{"promptType":"define","text":"=Analyse : {{ $('AI Agent Analyste').item.json.output }}\nAlertes : {{ $json.output }}\n\nTA MISSION :\nFusionne ces deux objets en un seul JSON final structuré pour un Dashboard.\nAssure-toi que toutes les clés de l'Analyse sont présentes (summary, metrics, insights, anomalies, charts, conclusion).\n\nCONSIGNE CRUCIALE POUR LE DASHBOARD :\nLe champ \"alertes\" doit impérativement être un TABLEAU (Array []) d'objets simplifiés.\nChaque objet dans ce tableau DOIT avoir ce format :\n{\n  \"niveau\": \"critique\" ou \"warning\" ou \"info\",\n  \"service\": \"Nom du service\",\n  \"message\": \"Description courte de l'alerte\"\n}\n\n\"RÉPONDS UNIQUEMENT AVEC LE JSON PUR. Aucun texte avant, aucun texte après, aucune balise markdown comme ```json.\"","options":{}},"type":"@n8n/n8n-nodes-langchain.agent","typeVersion":3.1,"position":[1280,16],"id":"5e6ac7a8-18d9-4a84-a00f-bcfd265589eb","name":"AI Agent Format"},{"parameters":{"method":"POST","url":"https://webhook.site/d2754b91-b29a-4e32-9093-d7b8c143062c","sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify($json.output) }}","options":{}},"type":"n8n-nodes-base.httpRequest","typeVersion":4.4,"position":[1632,112],"id":"99896657-7fc9-4341-a6a4-c36bfe4b5ea7","name":"HTTP Request"}],"connections":{"Webhook":{"main":[[{"node":"SQL Agent","type":"main","index":0}]]},"OpenAI Chat Model":{"ai_languageModel":[[{"node":"SQL Agent","type":"ai_languageModel","index":0}]]},"MCP Client":{"ai_tool":[[{"node":"SQL Agent","type":"ai_tool","index":0}]]},"SQL Agent":{"main":[[{"node":"AI Agent Analyste","type":"main","index":0}]]},"OpenAI Chat Model1":{"ai_languageModel":[[{"node":"AI Agent Analyste","type":"ai_languageModel","index":0}]]},"AI Agent Analyste":{"main":[[{"node":"AI Agent Alerte","type":"main","index":0}]]},"OpenAI Chat Model2":{"ai_languageModel":[[{"node":"AI Agent Alerte","type":"ai_languageModel","index":0}]]},"MCP Client 2":{"ai_tool":[[{"node":"AI Agent Alerte","type":"ai_tool","index":0}]]},"AI Agent Alerte":{"main":[[{"node":"AI Agent Format","type":"main","index":0}]]},"OpenAI Chat Model3":{"ai_languageModel":[[{"node":"AI Agent Format","type":"ai_languageModel","index":0}]]},"AI Agent Format":{"main":[[{"node":"HTTP Request","type":"main","index":0},{"node":"Respond to Webhook1","type":"main","index":0}]]},"HTTP Request":{"main":[[]]}},"settings":{"executionOrder":"v1","binaryMode":"separate","availableInMCP":false},"staticData":null,"meta":{"templateCredsSetupCompleted":true},"pinData":{},"versionId":"52ff28fc-0a6b-4ea7-891d-96e3de1dcb7e","activeVersionId":null,"versionCounter":156,"triggerCount":0,"tags":[],"shared":[{"updatedAt":"2026-04-22T07:41:41.287Z","createdAt":"2026-04-22T07:41:41.287Z","role":"workflow:owner","workflowId":"RBaKnQUiAdSuRfZt","projectId":"Okz55glBTmWE9LNr","project":{"updatedAt":"2026-04-17T07:39:45.529Z","createdAt":"2026-04-17T07:39:10.107Z","id":"Okz55glBTmWE9LNr","name":"samuel dorismond <samuel.dorismond@epita.fr>","type":"personal","icon":null,"description":null,"creatorId":"cfd624f8-4c33-4c50-86a4-b2b106193604"}}]}]
+[
+    {
+        "updatedAt": "2026-04-17T09:51:28.509Z",
+        "createdAt": "2026-04-17T07:42:56.577Z",
+        "id": "WORKFLOW_ID",
+        "name": "01_Intro",
+        "description": null,
+        "active": false,
+        "isArchived": false,
+        "nodes": [
+            {
+                "parameters": {},
+                "type": "n8n-nodes-base.manualTrigger",
+                "typeVersion": 1,
+                "position": [
+                    -112,
+                    -32
+                ],
+                "id": "NODE_ID",
+                "name": "When clicking \u2018Execute workflow\u2019"
+            },
+            {
+                "parameters": {
+                    "options": {}
+                },
+                "type": "n8n-nodes-base.readWriteFile",
+                "typeVersion": 1.1,
+                "position": [
+                    -160,
+                    -288
+                ],
+                "id": "NODE_ID",
+                "name": "Read/Write Files from Disk"
+            }
+        ],
+        "connections": {
+            "When clicking \u2018Execute workflow\u2019": {
+                "main": [
+                    []
+                ]
+            }
+        },
+        "settings": {
+            "executionOrder": "v1",
+            "binaryMode": "separate",
+            "availableInMCP": false
+        },
+        "staticData": null,
+        "meta": null,
+        "pinData": {},
+        "versionId": "d8d0f37e-405f-4ad4-b41c-46e40fb1dca3",
+        "activeVersionId": null,
+        "versionCounter": 15,
+        "triggerCount": 0,
+        "tags": [],
+        "shared": [
+            {
+                "updatedAt": "2026-04-17T07:42:56.581Z",
+                "createdAt": "2026-04-17T07:42:56.581Z",
+                "role": "workflow:owner",
+                "workflowId": "huEq7DKtWVn8B9Tq",
+                "projectId": "Okz55glBTmWE9LNr",
+                "project": {
+                    "updatedAt": "2026-04-17T07:39:45.529Z",
+                    "createdAt": "2026-04-17T07:39:10.107Z",
+                    "id": "REDACTED",
+                    "name": "samuel-epita",
+                    "type": "personal",
+                    "icon": null,
+                    "description": null,
+                    "creatorId": "cfd624f8-4c33-4c50-86a4-b2b106193604"
+                }
+            }
+        ]
+    },
+    {
+        "updatedAt": "2026-04-22T09:04:36.463Z",
+        "createdAt": "2026-04-22T07:41:41.285Z",
+        "id": "WORKFLOW_ID",
+        "name": "Samuel DORISMOND",
+        "description": null,
+        "active": false,
+        "isArchived": false,
+        "nodes": [
+            {
+                "parameters": {
+                    "httpMethod": "POST",
+                    "path": "bde029bb-a3f1-4745-a222-69062771e024",
+                    "responseMode": "responseNode",
+                    "options": {}
+                },
+                "type": "n8n-nodes-base.webhook",
+                "typeVersion": 2.1,
+                "position": [
+                    0,
+                    16
+                ],
+                "id": "NODE_ID",
+                "name": "Webhook",
+                "webhookId": "bde029bb-a3f1-4745-a222-69062771e024"
+            },
+            {
+                "parameters": {
+                    "model": {
+                        "__rl": true,
+                        "value": "gpt-4o-mini",
+                        "mode": "list",
+                        "cachedResultName": "gpt-4o-mini"
+                    },
+                    "builtInTools": {},
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+                "typeVersion": 1.3,
+                "position": [
+                    232,
+                    240
+                ],
+                "id": "NODE_ID",
+                "name": "OpenAI Chat Model",
+                "credentials": {
+                    "openAiApi": {
+                        "id": "6ErSqHHjuNTwT6ik",
+                        "name": "OpenAi account"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "endpointUrl": "http://localhost:8000/mcp",
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+                "typeVersion": 1.2,
+                "position": [
+                    360,
+                    240
+                ],
+                "id": "NODE_ID",
+                "name": "MCP Client"
+            },
+            {
+                "parameters": {
+                    "promptType": "define",
+                    "text": "=Question: {{ $json.body.query }}\n\nR\u00e8gles :\n1. Appelle get_schema() en premier pour comprendre les tables.\n2. G\u00e9n\u00e8re une requ\u00eate SQL pr\u00e9cise avec les jointures n\u00e9cessaires.\n3. Appelle run_sql() et retourne UNIQUEMENT les donn\u00e9es brutes (JSON).\n",
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.agent",
+                "typeVersion": 3.1,
+                "position": [
+                    224,
+                    16
+                ],
+                "id": "NODE_ID",
+                "name": "SQL Agent"
+            },
+            {
+                "parameters": {
+                    "model": {
+                        "__rl": true,
+                        "value": "gpt-4o-mini",
+                        "mode": "list",
+                        "cachedResultName": "gpt-4o-mini"
+                    },
+                    "builtInTools": {},
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+                "typeVersion": 1.3,
+                "position": [
+                    648,
+                    240
+                ],
+                "id": "NODE_ID",
+                "name": "OpenAI Chat Model1",
+                "credentials": {
+                    "openAiApi": {
+                        "id": "6ErSqHHjuNTwT6ik",
+                        "name": "OpenAi account"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "promptType": "define",
+                    "text": "=Voici la question de l'utilisateur : {{ $('Webhook').item.json.body.query }}\n\nEt voici les donn\u00e9es brutes extraites de la base de donn\u00e9es :\n{{ $json.output }}\n\nTA MISSION : Transforme ces donn\u00e9es en un rapport d'analyse structur\u00e9.\nTU DOIS R\u00c9PONDRE UNIQUEMENT EN JSON avec cette structure pr\u00e9cise :\n{\n  \"summary\": \"R\u00e9sum\u00e9 de l'analyse\",\n  \"metrics\": {\n    \"total_patients\": 0,\n    \"age_moyen\": 0,\n    \"service_plus_charge\": \"Nom\",\n    \"cout_total\": 0\n  },\n  \"insights\": [\"Point cl\u00e9 1\", \"Point cl\u00e9 2\"],\n  \"anomalies\": [\"Alerte potentielle 1\"],\n  \"charts\": {\n    \"patients_par_service\": [{\"service\": \"...\", \"value\": 0}],\n    \"diagnostics_frequents\": [{\"diagnostic\": \"...\", \"total\": 0}]\n  },\n  \"conclusion\": \"Bref avis m\u00e9dical\"\n}\n",
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.agent",
+                "typeVersion": 3.1,
+                "position": [
+                    576,
+                    16
+                ],
+                "id": "NODE_ID",
+                "name": "AI Agent Analyste"
+            },
+            {
+                "parameters": {
+                    "promptType": "define",
+                    "text": "=Analyse JSON : {{ $json.output }}\n\nTa mission :\n1. Identifie les situations \u00e0 risque.\n2. Appelle creer_alerte() pour chaque situation critique.\n3. Appelle calculer_score_risque() si des patients hospitalis\u00e9s sont mentionn\u00e9s.\n4. Appelle envoyer_rapport() si tu g\u00e9n\u00e8res une alerte critique.\n",
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.agent",
+                "typeVersion": 3.1,
+                "position": [
+                    928,
+                    16
+                ],
+                "id": "NODE_ID",
+                "name": "AI Agent Alerte"
+            },
+            {
+                "parameters": {
+                    "model": {
+                        "__rl": true,
+                        "value": "gpt-4o-mini",
+                        "mode": "list",
+                        "cachedResultName": "gpt-4o-mini"
+                    },
+                    "builtInTools": {},
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+                "typeVersion": 1.3,
+                "position": [
+                    936,
+                    240
+                ],
+                "id": "NODE_ID",
+                "name": "OpenAI Chat Model2",
+                "credentials": {
+                    "openAiApi": {
+                        "id": "6ErSqHHjuNTwT6ik",
+                        "name": "OpenAi account"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "endpointUrl": "http://localhost:8001/mcp",
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+                "typeVersion": 1.2,
+                "position": [
+                    1064,
+                    240
+                ],
+                "id": "NODE_ID",
+                "name": "MCP Client 2"
+            },
+            {
+                "parameters": {
+                    "model": {
+                        "__rl": true,
+                        "value": "gpt-4o-mini",
+                        "mode": "list",
+                        "cachedResultName": "gpt-4o-mini"
+                    },
+                    "builtInTools": {},
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+                "typeVersion": 1.3,
+                "position": [
+                    1352,
+                    240
+                ],
+                "id": "NODE_ID",
+                "name": "OpenAI Chat Model3",
+                "credentials": {
+                    "openAiApi": {
+                        "id": "6ErSqHHjuNTwT6ik",
+                        "name": "OpenAi account"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "respondWith": "json",
+                    "responseBody": "={{ JSON.parse($json.output) }}",
+                    "options": {}
+                },
+                "type": "n8n-nodes-base.respondToWebhook",
+                "typeVersion": 1.5,
+                "position": [
+                    1632,
+                    -80
+                ],
+                "id": "NODE_ID",
+                "name": "Respond to Webhook1"
+            },
+            {
+                "parameters": {
+                    "promptType": "define",
+                    "text": "=Analyse : {{ $('AI Agent Analyste').item.json.output }}\nAlertes : {{ $json.output }}\n\nTA MISSION :\nFusionne ces deux objets en un seul JSON final structur\u00e9 pour un Dashboard.\nAssure-toi que toutes les cl\u00e9s de l'Analyse sont pr\u00e9sentes (summary, metrics, insights, anomalies, charts, conclusion).\n\nCONSIGNE CRUCIALE POUR LE DASHBOARD :\nLe champ \"alertes\" doit imp\u00e9rativement \u00eatre un TABLEAU (Array []) d'objets simplifi\u00e9s.\nChaque objet dans ce tableau DOIT avoir ce format :\n{\n  \"niveau\": \"critique\" ou \"warning\" ou \"info\",\n  \"service\": \"Nom du service\",\n  \"message\": \"Description courte de l'alerte\"\n}\n\n\"R\u00c9PONDS UNIQUEMENT AVEC LE JSON PUR. Aucun texte avant, aucun texte apr\u00e8s, aucune balise markdown comme ```json.\"",
+                    "options": {}
+                },
+                "type": "@n8n/n8n-nodes-langchain.agent",
+                "typeVersion": 3.1,
+                "position": [
+                    1280,
+                    16
+                ],
+                "id": "NODE_ID",
+                "name": "AI Agent Format"
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://webhook.site/d2754b91-b29a-4e32-9093-d7b8c143062c",
+                    "sendBody": true,
+                    "specifyBody": "json",
+                    "jsonBody": "={{ JSON.stringify($json.output) }}",
+                    "options": {}
+                },
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.4,
+                "position": [
+                    1632,
+                    112
+                ],
+                "id": "NODE_ID",
+                "name": "HTTP Request"
+            }
+        ],
+        "connections": {
+            "Webhook": {
+                "main": [
+                    [
+                        {
+                            "node": "SQL Agent",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "OpenAI Chat Model": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "SQL Agent",
+                            "type": "ai_languageModel",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "MCP Client": {
+                "ai_tool": [
+                    [
+                        {
+                            "node": "SQL Agent",
+                            "type": "ai_tool",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "SQL Agent": {
+                "main": [
+                    [
+                        {
+                            "node": "AI Agent Analyste",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "OpenAI Chat Model1": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "AI Agent Analyste",
+                            "type": "ai_languageModel",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "AI Agent Analyste": {
+                "main": [
+                    [
+                        {
+                            "node": "AI Agent Alerte",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "OpenAI Chat Model2": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "AI Agent Alerte",
+                            "type": "ai_languageModel",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "MCP Client 2": {
+                "ai_tool": [
+                    [
+                        {
+                            "node": "AI Agent Alerte",
+                            "type": "ai_tool",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "AI Agent Alerte": {
+                "main": [
+                    [
+                        {
+                            "node": "AI Agent Format",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "OpenAI Chat Model3": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "AI Agent Format",
+                            "type": "ai_languageModel",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "AI Agent Format": {
+                "main": [
+                    [
+                        {
+                            "node": "HTTP Request",
+                            "type": "main",
+                            "index": 0
+                        },
+                        {
+                            "node": "Respond to Webhook1",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "HTTP Request": {
+                "main": [
+                    []
+                ]
+            }
+        },
+        "settings": {
+            "executionOrder": "v1",
+            "binaryMode": "separate",
+            "availableInMCP": false
+        },
+        "staticData": null,
+        "meta": {
+            "templateCredsSetupCompleted": true
+        },
+        "pinData": {},
+        "versionId": "52ff28fc-0a6b-4ea7-891d-96e3de1dcb7e",
+        "activeVersionId": null,
+        "versionCounter": 156,
+        "triggerCount": 0,
+        "tags": [],
+        "shared": [
+            {
+                "updatedAt": "2026-04-22T07:41:41.287Z",
+                "createdAt": "2026-04-22T07:41:41.287Z",
+                "role": "workflow:owner",
+                "workflowId": "RBaKnQUiAdSuRfZt",
+                "projectId": "Okz55glBTmWE9LNr",
+                "project": {
+                    "updatedAt": "2026-04-17T07:39:45.529Z",
+                    "createdAt": "2026-04-17T07:39:10.107Z",
+                    "id": "REDACTED",
+                    "name": "samuel-epita",
+                    "type": "personal",
+                    "icon": null,
+                    "description": null,
+                    "creatorId": "cfd624f8-4c33-4c50-86a4-b2b106193604"
+                }
+            }
+        ]
+    }
+]
